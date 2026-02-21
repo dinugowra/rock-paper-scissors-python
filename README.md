@@ -49,6 +49,3 @@ Notes
 Examples
 - Play one round on CLI: enter `rock`, `paper`, `scissors`, or `r`/`p`/`s`.
 - In GUI, click the choice buttons to play; use "Reset" to clear scores.
-
-Want changes?
-- I can default to launching the GUI automatically when Tkinter is present, add unit tests, or include a small CONTRIBUTING/CHANGELOG file. Tell me which you'd like next.
