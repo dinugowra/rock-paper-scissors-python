@@ -63,15 +63,49 @@ def play_round(user_choice: str) -> Tuple[str, str, str]:
     return user_choice, comp, winner
 
 
+# --- Score Tracker ---
+class ScoreTracker:
+    """Track wins, ties, and round history."""
+
+    def __init__(self):
+        self.rounds = []  # List of (user_choice, comp_choice, winner)
+        self.player_wins = 0
+        self.player_ties = 0
+        self.computer_wins = 0
+
+    def record_round(self, user_choice: str, comp_choice: str, winner: str) -> None:
+        """Record a round result."""
+        self.rounds.append((user_choice, comp_choice, winner))
+        if winner == "user":
+            self.player_wins += 1
+        elif winner == "computer":
+            self.computer_wins += 1
+        else:
+            self.player_ties += 1
+
+    def reset(self) -> None:
+        """Clear all stats."""
+        self.rounds.clear()
+        self.player_wins = 0
+        self.player_ties = 0
+        self.computer_wins = 0
+
+    def format_stats(self) -> str:
+        """Return formatted stats string."""
+        total = len(self.rounds)
+        return f"Player Wins: {self.player_wins} | Ties: {self.player_ties} | Computer Wins: {self.computer_wins} | Total: {total}"
+
+
 # --- CLI Implementation ---
 def run_cli() -> None:
     """Run an interactive command-line game loop."""
-    user_score = 0
-    computer_score = 0
+    tracker = ScoreTracker()
     print("Welcome to Rock Paper Scissors! (type 'q' or 'quit' to exit)")
     while True:
         raw = input("Enter rock, paper, or scissors: ")
         if raw.strip().lower() in ("q", "quit"):
+            print("\nFinal Stats:")
+            print(tracker.format_stats())
             print("Thanks for playing!")
             break
         user = normalize_choice(raw)
@@ -80,6 +114,8 @@ def run_cli() -> None:
             continue
 
         user_choice, comp_choice, winner = play_round(user)
+        tracker.record_round(user_choice, comp_choice, winner)
+        
         print(f"You chose: {user_choice}")
         print(f"Computer chose: {comp_choice}")
 
@@ -87,12 +123,11 @@ def run_cli() -> None:
             print("Result: It's a tie!")
         elif winner == "user":
             print("Result: You win!")
-            user_score += 1
         else:
             print("Result: Computer wins!")
-            computer_score += 1
 
-        print(f"Score - You: {user_score}, Computer: {computer_score}\n")
+        print(tracker.format_stats())
+        print()
 
 
 # --- GUI Implementation ---
@@ -103,8 +138,7 @@ class RPSGameGUI:
         self.master = master
         master.title("Rock Paper Scissors")
 
-        self.user_score = 0
-        self.computer_score = 0
+        self.tracker = ScoreTracker()
 
         self.user_choice_label = tk.Label(master, text="You chose: -")
         self.user_choice_label.pack()
@@ -115,8 +149,8 @@ class RPSGameGUI:
         self.result_label = tk.Label(master, text="Result: -")
         self.result_label.pack()
 
-        self.score_label = tk.Label(master, text="Score - You: 0, Computer: 0")
-        self.score_label.pack()
+        self.scoreboard_label = tk.Label(master, text="Player Wins: 0 | Ties: 0 | Computer Wins: 0 | Total: 0", font=("Arial", 10, "bold"))
+        self.scoreboard_label.pack(pady=10)
 
         button_frame = tk.Frame(master)
         button_frame.pack(pady=10)
@@ -133,6 +167,8 @@ class RPSGameGUI:
 
     def play(self, user_choice: str) -> None:
         user_choice, comp_choice, winner = play_round(user_choice)
+        self.tracker.record_round(user_choice, comp_choice, winner)
+        
         self.user_choice_label.config(text=f"You chose: {user_choice}")
         self.computer_choice_label.config(text=f"Computer chose: {comp_choice}")
 
@@ -140,17 +176,22 @@ class RPSGameGUI:
             self.result_label.config(text="Result: It's a tie!")
         elif winner == "user":
             self.result_label.config(text="Result: You win!")
-            self.user_score += 1
         else:
             self.result_label.config(text="Result: Computer wins!")
-            self.computer_score += 1
 
-        self.score_label.config(text=f"Score - You: {self.user_score}, Computer: {self.computer_score}")
+        self.update_scoreboard()
+
+    def update_scoreboard(self) -> None:
+        """Update the scoreboard display."""
+        stats = self.tracker.format_stats()
+        self.scoreboard_label.config(text=stats)
 
     def reset_scores(self) -> None:
-        self.user_score = 0
-        self.computer_score = 0
-        self.score_label.config(text="Score - You: 0, Computer: 0")
+        self.tracker.reset()
+        self.user_choice_label.config(text="You chose: -")
+        self.computer_choice_label.config(text="Computer chose: -")
+        self.result_label.config(text="Result: -")
+        self.scoreboard_label.config(text="Player Wins: 0 | Ties: 0 | Computer Wins: 0 | Total: 0")
 
 
 def main(argv: list[str] | None = None) -> int:
